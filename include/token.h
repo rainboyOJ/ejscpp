@@ -64,6 +64,7 @@ enum TOKEN {
     TK_RBRACE,     // }
     TK_LBRACKET,   // [
     TK_RBRACKET,   // ]
+    TK_SEMICOLON, //;
 
     KW_LET,     //let
     KW_VAR,     //var

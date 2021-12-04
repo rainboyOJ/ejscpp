@@ -14,16 +14,20 @@ int main(int argc,char * argv[]){
     for(int i=0;i<=argc-1;++i){
         printf("argv[%d] : %s\n",i,argv[i]);
     }
-    fstream fs;
-    fs.open(argv[1]);
-    while ( fs ) {
-        cout << (char)fs.get();
+    if( argc <= 1){
+        return 0;
     }
-    cout << endl;
-    cout << endl;
-    cout << endl;
-    fs.close();
-
+    {
+        auto l = std::make_unique<Lexical>(argv[1]);
+        char c = l->get();
+        while( c !=EOF){
+            std::cout << c ;
+            c = l->get();
+        }
+    }
+    std::cout  << std::endl;
+    std::cout  << std::endl;
+    
 
     Lexical lex(argv[1]);
     lex.printLex();

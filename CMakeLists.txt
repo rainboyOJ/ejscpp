@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.0)
 project(ejscpp)
 
 # 指定编译flag
-set(CMAKE_CXX_FLAGS "-std=c++20 -g")
+set(CMAKE_CXX_FLAGS "-std=c++17 -g")
 
 set(TEST_EJS_DIR ./test)
 
@@ -14,20 +14,28 @@ set(TEST_EJS_DIR ./test)
 
 # 指定include 的头文件的位置
 include_directories(./include)
-include_directories(./jsoncpp-1.9.4/include)
+include_directories(./lib)
+#include_directories(./jsoncpp-1.9.4/include)
 
 
-set(JSONCPP_WITH_TESTS OFF)
-set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF)
-set(JSONCPP_WITH_WARNING_AS_ERROR  OFF)
-#set(JSONCPP_WITH_STRICT_ISO  ON)
-#set(JSONCPP_WITH_PKGCONFIG_SUPPORT "Generate and install .pc files" ON)
-set(JSONCPP_WITH_CMAKE_PACKAGE OFF)
-set(JSONCPP_WITH_EXAMPLE  OFF)
-set(BUILD_SHARED_LIBS OFF)
-set(BUILD_STATIC_LIBS ON)
-set(BUILD_OBJECT_LIBS OFF)
-add_subdirectory(./jsoncpp-1.9.4)
+option (USE_DEBUG "使用debug" ON)
+message("CMAKE_SOURCE_DIR=${USE_DEBUG}")
+if(USE_DEBUG)
+    add_definitions(-DDEBUG_ENUM)
+endif()
+
+
+#set(JSONCPP_WITH_TESTS OFF)
+#set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF)
+#set(JSONCPP_WITH_WARNING_AS_ERROR  OFF)
+##set(JSONCPP_WITH_STRICT_ISO  ON)
+##set(JSONCPP_WITH_PKGCONFIG_SUPPORT "Generate and install .pc files" ON)
+#set(JSONCPP_WITH_CMAKE_PACKAGE OFF)
+#set(JSONCPP_WITH_EXAMPLE  OFF)
+#set(BUILD_SHARED_LIBS OFF)
+#set(BUILD_STATIC_LIBS ON)
+#set(BUILD_OBJECT_LIBS OFF)
+#add_subdirectory(./jsoncpp-1.9.4)
 
 
 

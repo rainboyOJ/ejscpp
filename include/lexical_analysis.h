@@ -10,8 +10,11 @@
 #include <map>
 #include <queue>
 #include <fstream>
-
 #include "token.h"
+
+#ifdef DEBUG_ENUM
+#include <magic_enum.hpp>
+#endif
 
 class Lexical {
     using TOKEN_VALUE = std::pair<TOKEN, std::string>;
@@ -43,17 +46,16 @@ class Lexical {
         bool parse();        //一个一个从ejs文件中取出Token
         const TOKEN_VALUE & getCurrentToken() const;//得到当前的TOken
         void printLex();    //输出各个Token
+        char get() ;
+        void unget(char c);
+        char peek() ;
     private:
         char getNextChar();
         char peekNextChar();
+        void setCurrentToken(TOKEN token);
         void setCurrentToken(TOKEN token,std::string && str);
 
         void buff(size_t const siz);
-        char get() ;
-        std::string get(size_t const siz) ;
-
-        char peek() ;
-        std::string peek(size_t const siz) ;
 
         int line  = 1;
         int colum = 0;

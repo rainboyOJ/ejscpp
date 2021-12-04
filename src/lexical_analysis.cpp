@@ -28,49 +28,37 @@ char Lexical::peekNextChar(){
 void Lexical::buff(size_t const siz){
     while ( fs && q.size() < siz ) { 
         q.emplace_back();
-        fs >> q.back();
+        //fs >> q.back();
+        q.back() = fs.get();
     }
-    if( !fs ){
-        q.emplace_back(EOF);
-    }
+    //if( !fs ){
+        //q.emplace_back(EOF);
+    //}
 }
 
 char Lexical::get() {
-    std::string ret = get(1);
-    return ret[0];
+    if( q.size() == 0)
+        buff(100);
+    char c = q.front();
+    q.pop_front();
+    return c;
 }
 
-std::string Lexical::get(size_t const siz){
-    std::string ret;
-
-    if( q.size() < siz )
-        buff(siz - q.size());
-
-    for(int i=1; !q.empty() && i<=siz ;++i){
-        ret += q.front();
-        q.pop_front();
-    }
-
-    return ret;
+void Lexical::unget(char c){
+    q.push_front(c);
 }
 
 char Lexical::peek() {
-    std::string ret = peek(1);
-    return ret[0];
+    if( q.size() == 0) 
+        buff(100);
+    return q.front();
 }
 
-std::string Lexical::peek(size_t const siz){
-    std::string ret;
 
-    if( q.size() < siz )
-        buff(siz - q.size());
-
-    for(int i=0; i< siz && i < q.size();++i){
-        ret += q[i];
-    }
-
-    return ret;
+void Lexical::setCurrentToken(TOKEN token){
+    currentToken = std::make_pair(token ,"");
 }
+
 void Lexical::setCurrentToken(TOKEN token,std::string && str){
     currentToken = std::make_pair(token ,str);
 }
@@ -84,41 +72,62 @@ void Lexical::setCurrentToken(TOKEN token,std::string && str){
 */
 bool Lexical::parse(){
 
-    if( peek() == EOF){
-        setCurrentToken(TK_EOF, "");
-        return 0;
-    }
-
     //在<% 标签的外部的时候
     //不停的读取字符,把它们当成 字符串返回
     //直接 遇到 <% 或 eof
     if( in_script_tag == 0){ //在外部
-        std::string value;
-
-        while ( 1 ) {
-            char c = get();
-            if(( c == '<'  && peek() == '%')){
+        char c = get();
+        if( c == EOF ) {
+            setCurrentToken(TK_EOF); //token 外部的字符串
+            return 0;
+        }
+        if(( c == '<'  && peek() == '%')){
+            get();
+            if( peek() == '=' ){
                 get();
-                setCurrentToken(LIT_OUT_SCRIPT_STR, std::move(value)); //token 外部的字符串
+                setCurrentToken(TK_scriptlet_escaped, "");
+            }
+            else if( peek() == '-'){
+                get();
+                setCurrentToken(TK_scriptlet_unescaped, "");
+            }
+            else
+                setCurrentToken(TK_scriptlet, "");
+            in_script_tag = 1;
+            return 1;
+        }
+
+        //普通字符串
+        std::string value;
+        while ( 1 ) {
+            if(( c == '<'  && peek() == '%')){
+                unget('<');
                 break;
             }
             else if( c == EOF){
-                q.push_front(EOF);
-                setCurrentToken(LIT_OUT_SCRIPT_STR, std::move(value));
-                return 1;
+                unget(EOF);
+                break;
             }
             value+=c;
+            c = get();
         }
-        in_script_tag = 1;
+        setCurrentToken(LIT_OUT_SCRIPT_STR, std::move(value)); //token 外部的字符串
         return 1;
     }
     //在标签内部
     std::string value;
     while ( 1 ) {
         char c = get();
+
+        // 各种各样的TOKEN的 解析 
+        // 1 无用字符 消去
+        while ( anyone(c, ' ','\n', '\r','\t')) {
+            c = get();
+        }
+
         if(c == '%' && peek() == '>'){
             get();
-            setCurrentToken(KW_IF, std::move(value)); //这里不对
+            setCurrentToken(TK_scriptend, std::move(value)); //这里不对
             break;
         }
         else if( c == EOF){ //ERROR
@@ -126,12 +135,6 @@ bool Lexical::parse(){
             //throw excepetion
         }
 
-        // 各种各样的TOKEN的 解析 
-        // 1 无用字符 消去
-
-        while ( anyone(c, ' ','\n', '\r','\t')) {
-            c = get();
-        }
         // 2 注释的消去 
         // 第一种注释 // 行注释 直接遇到 \n 或 '%>' 为止
         // 过滤掉
@@ -203,15 +206,28 @@ bool Lexical::parse(){
         if( anyone(c, '+', '-', '*', '/', '%', 
                     '(',')', '{','}', '[',']', ',', ';', '=')){
             switch( c ){
-                case '+': setCurrentToken(TK_PLUS,"") break;
-                case '-': setCurrentToken(TK_MINUS,"") break;
-                case '*': setCurrentToken(TK_TIMES,"") break;
-                case '/': setCurrentToken(TK_DIV,"") break;
-                case '%': setCurrentToken(TK_MOD,"") break;
+                case '+': setCurrentToken(TK_PLUS,"");  break;
+                case '-': setCurrentToken(TK_MINUS,""); break;
+                case '*': setCurrentToken(TK_TIMES,""); break;
+                case '/': setCurrentToken(TK_DIV,"");   break;
+                case '%': setCurrentToken(TK_MOD,"");   break;
+                case '(': setCurrentToken(TK_LPAREN,"");   break;
+                case ')': setCurrentToken(TK_RPAREN,"");   break;
+                case '{': setCurrentToken(TK_LBRACE,"");   break;
+                case '}': setCurrentToken(TK_RBRACE,"");   break;
+                case '[': setCurrentToken(TK_LBRACKET,"");   break;
+                case ']': setCurrentToken(TK_RBRACKET,"");   break;
+                case ',': setCurrentToken(TK_COMMA,"");   break;
+                case ';': setCurrentToken(TK_SEMICOLON,"");   break;
+                case '=': 
+                        if( peek() == '='){
+                            get();
+                            setCurrentToken(TK_EQ,"");
+                        }
+                        else setCurrentToken(TK_ASSIGN,"");
+                        break;
                 defaul: break;
             }
-
-            get();
             return 1;
         }
         value+=c;
@@ -223,6 +239,20 @@ bool Lexical::parse(){
 void Lexical::printLex(){
     while ( parse() ) {
         auto [x,y] = getCurrentToken();
-        std::cout << x << " " << y << std::endl;
+#ifdef DEBUG_ENUM
+        auto token_name = magic_enum::enum_name(x);
+        std::cout << x << " " <<  token_name<< " " << y << '\n';
+#else
+        std::cout << x << " " << y << '\n';
+#endif
     }
+
+    auto [x,y] = getCurrentToken();
+#ifdef DEBUG_ENUM
+    auto token_name = magic_enum::enum_name(x);
+    std::cout << x << " " <<  token_name<< " " << y << '\n';
+#else
+    std::cout << x << " " << y << '\n';
+#endif
+
 }
