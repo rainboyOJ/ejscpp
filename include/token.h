@@ -21,7 +21,9 @@ enum TOKEN {
     TK_LOGNOT,  // !
 
     TK_PLUS,   // +
+    TK_PLUS_PLUS,// ++
     TK_MINUS,  // -
+    TK_MINUS_MINUS,  // --
     TK_TIMES,  // *
     TK_DIV,    // /
     TK_MOD,    // %

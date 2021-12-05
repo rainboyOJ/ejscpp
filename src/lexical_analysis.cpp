@@ -177,12 +177,14 @@ bool Lexical::parse(){
             auto c  = peek();
             while ( std::isalpha( c)  || std::isdigit(c) ) {
                 value += get();
+                c = peek();
             }
             auto idx =   keywords.find(value);
             if( idx == keywords.end())
                 setCurrentToken(TK_IDENT, std::move(value));
             else
                 setCurrentToken(idx->second,std::move(value));
+            return 1;
         }
         // 5 字符串字面值
         if( c == '"' || c  == '\''){
@@ -204,10 +206,24 @@ bool Lexical::parse(){
         // 6 各种运行符号
         // + - * / % () {} [] , ; = ==
         if( anyone(c, '+', '-', '*', '/', '%', 
-                    '(',')', '{','}', '[',']', ',', ';', '=')){
+                    '(',')', '{','}', '[',']', ',', ';', '=','!' ,'<','>')){
             switch( c ){
-                case '+': setCurrentToken(TK_PLUS,"");  break;
-                case '-': setCurrentToken(TK_MINUS,""); break;
+                case '+': 
+                    if( peek() == '+'){
+                        get();
+                        setCurrentToken(TK_PLUS_PLUS);  
+                    }
+                    else
+                        setCurrentToken(TK_PLUS,"");  
+                    break;
+                case '-':
+                    if( peek() == '-'){
+                        get();
+                        setCurrentToken(TK_PLUS_PLUS);  
+                    }
+                    else
+                        setCurrentToken(TK_MINUS,""); 
+                    break;
                 case '*': setCurrentToken(TK_TIMES,""); break;
                 case '/': setCurrentToken(TK_DIV,"");   break;
                 case '%': setCurrentToken(TK_MOD,"");   break;
@@ -219,6 +235,22 @@ bool Lexical::parse(){
                 case ']': setCurrentToken(TK_RBRACKET,"");   break;
                 case ',': setCurrentToken(TK_COMMA,"");   break;
                 case ';': setCurrentToken(TK_SEMICOLON,"");   break;
+                case '<':
+                        if( peek() == '='){
+                            get();
+                            setCurrentToken(TK_LE);
+                        }
+                        else
+                          setCurrentToken(TK_LT);
+                        break;
+                case '!': 
+                        if( peek() == '='){
+                            get();
+                            setCurrentToken(TK_NE);
+                        }
+                        else
+                          setCurrentToken(TK_SEMICOLON);
+                        break;
                 case '=': 
                         if( peek() == '='){
                             get();

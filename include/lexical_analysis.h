@@ -32,7 +32,7 @@ class Lexical {
                 {"null", KW_NULL},
                 {"true", KW_TRUE},
                 {"false", KW_FALSE},
-                {"for", KW_FALSE},
+                {"for", KW_FOR},
                 {"func", KW_FUNC},
                 {"return", KW_RETURN},
                 {"break", KW_BREAK},
