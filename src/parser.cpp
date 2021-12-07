@@ -195,6 +195,8 @@ Statement* Parser::parseStatement() {
             node = new EmptyStmt(line, column);
             node->needRetValue = needRetValue;
             break;
+        case KW_VAR: //TODO 这两个表示定义变量,那么应该单独处理?!
+        case KW_LET:
         case TK_scriptend:
             currentToken = next();
             node = new EmptyStmt(line, column);

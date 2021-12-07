@@ -158,7 +158,11 @@ struct AssignExpr : public Expression {
             p->value = rhs->eval(rt);
             return p->value;
         }
-        else throw identName+ " not found";
+        else {
+            Value v = rhs->eval(rt);
+            rt->createVariable(identName, v);
+            return v;
+        }
     }
 
     std::string astString() override { return "AssignExpr";}

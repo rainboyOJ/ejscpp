@@ -126,6 +126,7 @@ class Context {
             auto var = new Variable();
             var->name = identName;
             var->value = std::move(value);
+            vars[identName] = var;
         }
 
         //得到一个变量

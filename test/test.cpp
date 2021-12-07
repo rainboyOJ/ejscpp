@@ -30,7 +30,19 @@ int main(int argc,char * argv[]){
     std::cout  << std::endl;
     
 
-    ejscpp ejs(argv[1]);
-    std::cout <<  ejs.excute();
+    try {
+        
+        ejscpp ejs(argv[1]);
+        std::cout <<  ejs.excute();
+    }
+    catch(std::exception & e){
+        std::cerr << " Exception : " << e.what() << "\n";
+    }
+    catch(const char* msg){
+        std::cerr << " Exception : " << msg << "\n";
+    }
+    catch(std::string & msg){
+        std::cerr << " Exception : " << msg << "\n";
+    }
     return 0;
 }
