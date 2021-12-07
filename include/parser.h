@@ -76,6 +76,7 @@ private:
     }
 
 private:
+    bool needRetValue{false};
     Lexical m_lex;
     const std::map<std::string, TOKEN> keywords;
     std::tuple<TOKEN, std::string> currentToken;

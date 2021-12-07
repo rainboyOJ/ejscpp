@@ -10,7 +10,8 @@ std::string ejscpp::excute(){
         auto astV = stmt->astString();
         std::cout << astV << std::endl;
         auto r = stmt->interpret(&rt); //解释语句
-        res += r.retValue.get<std::string>();
+        if( stmt -> needRetValue)
+            res += r.retValue.get<std::string>();
     }
     return res;
 } 

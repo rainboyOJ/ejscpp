@@ -170,6 +170,7 @@ struct AssignExpr : public Expression {
 struct Statement : public AstNode {
     using AstNode::AstNode;
 
+    bool needRetValue{false}; //是否需要返回字符串值
     virtual ~Statement() = default;
     virtual ExecResult interpret(Runtime* rt) = 0;
 

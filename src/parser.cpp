@@ -177,13 +177,24 @@ Statement* Parser::parseStatement() {
         case LIT_OUT_SCRIPT_STR:{
                 auto stmt = new OutStrStmt(line,column);
                 stmt->value = std::move(std::get<std::string>(currentToken));
+                stmt->needRetValue = true;
                 node = stmt;
                 currentToken = next();
                 break;
             }
-        case TK_scriptlet:
-        case TK_scriptlet_escaped:
+        case TK_scriptlet: //不需要返回值
+            needRetValue = false;
+            currentToken = next();
+            node = new EmptyStmt(line, column);
+            node->needRetValue = needRetValue;
+            break;
+        case TK_scriptlet_escaped: //需要返回值
         case TK_scriptlet_unescaped:
+            needRetValue = true;
+            currentToken = next();
+            node = new EmptyStmt(line, column);
+            node->needRetValue = needRetValue;
+            break;
         case TK_scriptend:
             currentToken = next();
             node = new EmptyStmt(line, column);
@@ -198,6 +209,7 @@ Statement* Parser::parseStatement() {
             break;
         default:
             node = parseExpressionStmt();  //解析表达式
+            node->needRetValue = needRetValue;
             break;
     }
     return node;
