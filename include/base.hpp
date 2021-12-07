@@ -2,8 +2,10 @@
 
 #pragma once
 #include <queue>
+#include <string>
 #include <variant>
 #include <string_view>
+#include <unordered_map>
 
 using namespace std::literals;
 
@@ -17,10 +19,15 @@ enum ExecutionResultType { ExecNormal, ExecReturn, ExecBreak, ExecContinue };
 
 //我们只会存这两种值 整数与字符串
 struct Value {
-    Value() =default;
+    Value() : value{std::string("")} {} //默认是空的字符串
     Value(int v)  :value{v} {}
     Value(std::string_view v) : value{std::string(v)} {}
-    std::variant<int,std::string> value;
+    Value(std::string&& v) : value{std::move(v)} {}
+
+    //copy constructor
+    Value(const Value& e) {
+        value = e.value;
+    }
 
     std::string_view get_type(){
         if(std::holds_alternative<int>(value))
@@ -32,7 +39,38 @@ struct Value {
 
     template<typename T>
     T get(){ return std::get<T>(value); }
+
+
+public:
+    Value operator+(Value & v);
+    
+    Value operator-(Value & v){
+        if( isInt() && v.isInt())
+            return get<int>() - v.get<int>();
+        throw "must both is INT type";
+    }
+
+    Value operator*(Value & v){
+        if( isInt() && v.isInt())
+            return get<int>() * v.get<int>();
+        throw "must both is INT type";
+    }
+    Value operator/(Value & v){
+        if( isInt() && v.isInt())
+            return get<int>() / v.get<int>();
+        throw "must both is INT type";
+    }
+    Value operator%(Value & v){
+        if( isInt() && v.isInt())
+            return get<int>() % v.get<int>();
+        throw "must both is INT type";
+    }
+
+public:
+    std::variant<int,std::string> value;
 };
+
+
 
 
 struct ExecResult {
@@ -42,7 +80,7 @@ struct ExecResult {
         : execType(execType), retValue(retValue) {}
 
     ExecutionResultType execType; //返回的类型
-    Value retValue;
+    Value retValue; //返回的结果
 };
 
 //代码块 多条语句组成
@@ -65,7 +103,6 @@ struct Function { //函数
 //变量
 struct Variable {
     explicit Variable() = default;
-
     std::string name; //名字
     Value value;//值
 };
@@ -75,14 +112,28 @@ struct Variable {
 class Context { 
     public:
         explicit Context() = default;
-        virtual ~Context();
+        virtual ~Context(){}; // TODO 删除所有的变量
 
         //是否有对应的变量
-        bool hasVariable(const std::string& identName); 
+        bool hasVariable(const std::string& identName) {
+            return (vars.find(identName) != vars.end() );
+        }
         //创建一个变量
-        void createVariable(const std::string& identName, Value value);
+        void createVariable(const std::string& identName, Value value){
+            if(vars.find(identName) != vars.end() ){
+                throw  identName + "vars name has exists";
+            }
+            auto var = new Variable();
+            var->name = identName;
+            var->value = std::move(value);
+        }
+
         //得到一个变量
-        std::string getVariable(const std::string& identName);
+        Variable* getVariable(const std::string& identName){
+            if( vars.find(identName) != vars.end())
+                return vars[identName];
+            else return nullptr;
+        }
 
         // 加入一个函数
         void addFunction(const std::string& name, Function* f);
@@ -103,7 +154,9 @@ class Runtime : public Context {
             std::vector<Value>);
 
     public:
-    explicit Runtime();
+    explicit Runtime(){}
+    virtual ~Runtime() override{ //TODO 根据stmts 删除所有的内存 delete
+    }
 
     //是否有内置的函数
     bool hasBuiltinFunction(const std::string& name);
@@ -111,9 +164,9 @@ class Runtime : public Context {
     BuiltinFuncType getBuiltinFunction(const std::string& name);
 
     //加入语句
-    void addStatement(Statement* stmt);
+    void addStatement(Statement* stmt) { stmts.push_back(stmt);}
     //得到语句
-    std::vector<Statement*> getStatements(); 
+    const std::vector<Statement*>& getStatements() const { return stmts; }
 
     private:
     //内置函数

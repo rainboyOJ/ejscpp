@@ -7,4 +7,4 @@ target_link_libraries(ejscpp)
 
 
 ## 添加测试
-add_subdirectory(./test)
+#add_subdirectory(./test)

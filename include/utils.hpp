@@ -46,3 +46,5 @@ void err_log(const char * file,int line,Args... args){
 
 #define LOG(...) err_log(__FILE__,__LINE__,__VA_ARGS__)
 
+
+#define panic(...) fprintf(stderr,__VA_ARGS__)

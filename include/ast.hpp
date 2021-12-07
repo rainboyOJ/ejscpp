@@ -4,6 +4,7 @@
 #include <queue>
 #include "base.hpp"
 #include "lexical_analysis.h"
+#include "utils.hpp"
 
 
 struct Expression;  //表达式
@@ -33,9 +34,9 @@ struct Expression : public AstNode {
     virtual ~Expression() = default;
 
     //计算结果
-    virtual Value eval(Runtime* rt, std::deque<Context*> ctxChain); 
+    virtual Value eval(Runtime* rt) = 0;
 
-    std::string astString() override;
+    std::string astString() override { return "Expression()";}
 };
 
 struct IntExpr : public Expression {
@@ -43,8 +44,8 @@ struct IntExpr : public Expression {
 
     int literal;
 
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    Value eval(Runtime* rt) override { return  literal;}
+    std::string astString() override { return "IntExpr";}
 };
 
 
@@ -53,8 +54,8 @@ struct StringExpr : public Expression {
 
     std::string literal;
 
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    Value eval(Runtime* rt) override { return Value(literal);}
+    std::string astString() override { return  "StringExpr";}
 };
 
 struct ArrayExpr : public Expression {
@@ -62,7 +63,7 @@ struct ArrayExpr : public Expression {
 
     std::vector<Expression*> literal;
 
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
+    Value eval(Runtime* rt) override;
     std::string astString() override;
 };
 
@@ -72,20 +73,27 @@ struct IdentExpr : public Expression {
     explicit IdentExpr(std::string identName, int line, int column)
         : Expression(line, column), identName(std::move(identName)) {}
     std::string identName;
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
+    Value eval(Runtime* rt) override {
+        if( rt->hasVariable(identName) )
+            return rt->getVariable(identName)->value;
+        else{
+            panic("error don't have variable %s",identName.c_str());
+            return 0; //TODO
+        }
+    };
 
-    std::string astString() override;
+    std::string astString() override { return "IdentExpr";}
 };
 
-//下标表达式
+//下标表达式 TODO
 struct IndexExpr : public Expression {
     explicit IndexExpr(int line, int column) : Expression(line, column) {}
 
     std::string identName;
     Expression* index;
 
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    Value eval(Runtime* rt) override { return 0;} // TODO
+    std::string astString() override { return "IndexExpr";}
 };
 
 struct BinaryExpr : public Expression {
@@ -93,16 +101,41 @@ struct BinaryExpr : public Expression {
     Expression* lhs{};
     TOKEN opt{};
     Expression* rhs{};
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
+    Value eval(Runtime* rt) override {
+        auto left = lhs->eval(rt);
+        if( rhs == nullptr) {
+            if( opt == TK_MINUS)
+                if( left.get_type() == "INT")
+                    return -left.get<int>();
+            //TODO --
+            //TODO ++
+            return left;
+        }
+        auto right = rhs->eval(rt);
+        switch(opt){
+            case TK_PLUS:
+                  return left + right;
+            case TK_MINUS:
+                  return left - right;
+            case TK_TIMES:
+                  return left * right;
+            case TK_DIV:
+                  return left / right;
+            case TK_MOD:
+                  return left % right;
+            default:
+                  throw "unsupport operator";
+        }
+    }
 
-    std::string astString() override;
+    std::string astString() override { return "BinaryExpr"; }
 };
 
 struct FunCallExpr : public Expression {
     explicit FunCallExpr(int line, int column) : Expression(line, column) {}
     std::string funcName;
     std::vector<Expression*> args;
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
+    Value eval(Runtime* rt) override;
     std::string astString() override;
 };
 
@@ -115,9 +148,20 @@ struct AssignExpr : public Expression {
     TOKEN opt;
     Expression* rhs{};
 
-    Value eval(Runtime* rt, std::deque<Context*> ctxChain) override;
+    Value eval(Runtime* rt) override {
+        if( typeid(*lhs) != typeid(IdentExpr)) {
+            throw "left value is not Ident";
+        }
+        std::string & identName = dynamic_cast<IdentExpr*>(lhs)->identName;
+        auto p = rt->getVariable(identName);
+        if( p != nullptr){
+            p->value = rhs->eval(rt);
+            return p->value;
+        }
+        else throw identName+ " not found";
+    }
 
-    std::string astString() override;
+    std::string astString() override { return "AssignExpr";}
 };
 
 //===----------------------------------------------------------------------===//
@@ -127,33 +171,60 @@ struct Statement : public AstNode {
     using AstNode::AstNode;
 
     virtual ~Statement() = default;
-    virtual ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain);
+    virtual ExecResult interpret(Runtime* rt) = 0;
 
-    std::string astString() override;
+    std::string astString() override { return "Statement";}
+};
+
+struct OutStrStmt: public Statement {
+    explicit OutStrStmt(int line, int column) : Statement(line, column) {}
+
+    ExecResult interpret(Runtime* rt) override {
+        return ExecResult{ExecNormal,Value(value)};
+    }
+    std::string value;
+    std::string astString() override { return "OutStrStmt";}
+};
+
+struct EmptyStmt: public Statement {
+    explicit EmptyStmt(int line, int column) : Statement(line, column) {}
+
+    ExecResult interpret(Runtime* rt) override { 
+        ExecResult r(ExecNormal);
+        return r;
+    }
+    std::string astString() override { return "EmptyStmt";}
 };
 
 struct BreakStmt : public Statement {
     explicit BreakStmt(int line, int column) : Statement(line, column) {}
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    ExecResult interpret(Runtime* rt) override {
+        return ExecResult(ExecBreak);
+    }
+    std::string astString() override { return "BreakStmt";}
 };
 
 struct ContinueStmt : public Statement {
     explicit ContinueStmt(int line, int column) : Statement(line, column) {}
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    ExecResult interpret(Runtime* rt) override {
+        return  ExecResult(ExecContinue);
+    }
+    std::string astString() override { return  "ContinueStmt";}
 };
 
 struct ExpressionStmt : public Statement {
     explicit ExpressionStmt(Expression* expr, int line, int column)
         : Statement(line, column), expr(expr) {}
 
-    Expression* expr{};
+    Expression* expr{}; //表达式语句里面是一个表达式树
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
-    std::string astString() override;
+    ExecResult interpret(Runtime* rt) override {
+        auto Val = expr->eval(rt);
+        return ExecResult{ExecNormal,Val};
+    }
+    std::string astString() override {return "ExpressionStmt"; }
 };
 
 struct ReturnStmt : public Statement {
@@ -161,7 +232,7 @@ struct ReturnStmt : public Statement {
 
     Expression* ret{};
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
+    ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
 };
 
@@ -172,7 +243,7 @@ struct IfStmt : public Statement {
     Block* block{};
     Block* elseBlock{};
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
+    ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
 };
 
@@ -182,6 +253,6 @@ struct WhileStmt : public Statement {
     Expression* cond{};
     Block* block{};
 
-    ExecResult interpret(Runtime* rt, std::deque<Context*> ctxChain) override;
+    ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
 };

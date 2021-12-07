@@ -47,6 +47,9 @@ endif()
 
 add_subdirectory(./src)
 
+## 添加测试
+add_subdirectory(./test)
+
 
 
 # 查找当前目录下的所有源文件
