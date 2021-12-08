@@ -106,6 +106,8 @@ struct Variable {
     explicit Variable() = default;
     std::string name; //名字
     Value value;//值
+    bool isArray{false};
+    std::vector<Value> arr;
 };
 
 
@@ -129,7 +131,7 @@ class Context {
             return (vars.find(identName) != vars.end() );
         }
         //创建一个变量
-        void createVariable(const std::string& identName, Value value){
+        Variable* createVariable(const std::string& identName, Value value){
             if(vars.find(identName) != vars.end() ){
                 throw  identName + "vars name has exists";
             }
@@ -137,6 +139,7 @@ class Context {
             var->name = identName;
             var->value = std::move(value);
             vars[identName] = var;
+            return var;
         }
 
         //得到一个变量

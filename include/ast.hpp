@@ -61,10 +61,13 @@ struct StringExpr : public Expression {
 struct ArrayExpr : public Expression {
     explicit ArrayExpr(int line, int column) : Expression(line, column) {}
 
-    std::vector<Expression*> literal;
+    std::vector<Expression*> literal; //内部是一个表达式指针组
 
-    Value eval(Runtime* rt) override;
-    std::string astString() override;
+    Value eval(Runtime* rt) override {
+        //不需要做什么 ？
+        return 0;
+    }
+    std::string astString() override { return "ArrayExpr";}
 
     virtual ~ArrayExpr(){
         for (auto& e : literal) {
@@ -98,7 +101,24 @@ struct IndexExpr : public Expression {
     std::string identName;
     Expression* index;
 
-    Value eval(Runtime* rt) override { return 0;} // TODO
+    Value eval(Runtime* rt) override {
+        Value idx = index->eval(rt);
+        if( !idx.isInt() ){
+            throw "index expression is not int";
+        }
+        int i = idx.get<int>(); //下标
+        if( rt->hasVariable(identName) ){
+            auto Var = rt->getVariable(identName);
+            if(Var->isArray){
+                if( i < Var->arr.size() )
+                    return Var->arr[i];
+                else
+                    throw identName + std::to_string(i)+" over array size";
+            }
+            throw identName +"is not Array";
+        }
+        throw identName +"is not found";
+    } // TODO
     std::string astString() override { return "IndexExpr";}
 
     virtual
@@ -201,14 +221,21 @@ struct AssignExpr : public Expression {
         }
         std::string & identName = dynamic_cast<IdentExpr*>(lhs)->identName;
         auto p = rt->getVariable(identName);
-        if( p != nullptr){
-            p->value = rhs->eval(rt);
-            return p->value;
+        if( p == nullptr){
+            p = rt->createVariable(identName,0);
+        }
+        if( typeid(*rhs) == typeid(ArrayExpr)) { //如果右边的值是数组
+            p->isArray = true;
+            auto arr = dynamic_cast<ArrayExpr*>(rhs);
+            for (auto& e : arr->literal) { //遍历表达式把结果计算出来
+                p->arr.push_back(e->eval(rt));
+                //delete e; //计算完就删除
+            }
+            return Value(0);
         }
         else {
-            Value v = rhs->eval(rt);
-            rt->createVariable(identName, v);
-            return v;
+            p->value = rhs->eval(rt); //计算右面的结果
+            return p->value;
         }
     }
 

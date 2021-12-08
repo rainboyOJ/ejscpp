@@ -79,16 +79,16 @@ Expression* Parser::parsePrimaryExpr(){
                 currentToken = next();
                 return func;
             }
-            //case TK_LBRACKET: { // [ //下标 TODO
-                //currentToken = next();
-                //auto* val = new IndexExpr(line, column);
-                //val->identName = ident;
-                //val->index = parseExpression();
-                //assert(val->index != nullptr);
-                //assert(getCurrentToken() == TK_RBRACKET);
-                //currentToken = next();
-                //return val;
-            //}
+            case TK_LBRACKET: { // [ //下标 TODO
+                currentToken = next();
+                auto* val = new IndexExpr(line, column);
+                val->identName = ident;
+                val->index = parseExpression();
+                assert(val->index != nullptr);
+                assert(getCurrentToken() == TK_RBRACKET);
+                currentToken = next();
+                return val;
+            }
             default: {
                 return new IdentExpr(ident, line, column);
             }
@@ -111,26 +111,25 @@ Expression* Parser::parsePrimaryExpr(){
         assert(getCurrentToken() == TK_RPAREN);
         currentToken = next();
         return val;
+    } else if (getCurrentToken() == TK_LBRACKET) { // 遇到一个 [
+        currentToken = next(); //下一个token
+        auto* ret = new ArrayExpr(line, column); //new 一个ArrayExpr
+        if (getCurrentToken() != TK_RBRACKET) { //不是 ]
+            while (getCurrentToken() != TK_RBRACKET) {
+                ret->literal.push_back(parseExpression());
+                if (getCurrentToken() == TK_COMMA) {
+                    currentToken = next();
+                }
+            }
+            assert(getCurrentToken() == TK_RBRACKET);
+            currentToken = next();
+            return ret;
+        } else {
+            currentToken = next();
+            // It's an empty array literal
+            return ret;
+        }
     }
-    //} else if (getCurrentToken() == TK_LBRACKET) { //解析数组 TODO
-        //currentToken = next();
-        //auto* ret = new ArrayExpr(line, column);
-        //if (getCurrentToken() != TK_RBRACKET) {
-            //while (getCurrentToken() != TK_RBRACKET) {
-                //ret->literal.push_back(parseExpression());
-                //if (getCurrentToken() == TK_COMMA) {
-                    //currentToken = next();
-                //}
-            //}
-            //assert(getCurrentToken() == TK_RBRACKET);
-            //currentToken = next();
-            //return ret;
-        //} else {
-            //currentToken = next();
-            //// It's an empty array literal
-            //return ret;
-        //}
-    //}
     return nullptr;
 }
 //解析表达式
@@ -183,8 +182,7 @@ ExpressionStmt* Parser::parseExpressionStmt() {
 }
 
 Statement* Parser::parseStatement() {  
-    Statement* node;
-    switch (getCurrentToken()) {
+    Statement* node; switch (getCurrentToken()) {
         //case KW_FOR //TODO
         case LIT_OUT_SCRIPT_STR:{
                 auto stmt = new OutStrStmt(line,column);
