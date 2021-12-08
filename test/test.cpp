@@ -19,7 +19,8 @@ int main(int argc,char * argv[]){
         return 0;
     }
     {
-        auto l = std::make_unique<Lexical>(argv[1]);
+        int line,colum;
+        auto l = std::make_unique<Lexical>(argv[1],line,colum);
         char c = l->get();
         while( c !=EOF){
             std::cout << c ;

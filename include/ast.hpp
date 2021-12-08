@@ -141,19 +141,30 @@ struct BinaryExpr : public Expression {
 
     Value eval(Runtime* rt) override {
         auto left = lhs->eval(rt);
-        delete lhs; //删除左边
-        lhs = nullptr; //是为不递归的被 delete
+        //delete lhs; //删除左边
+        //lhs = nullptr; //是为不递归的被 delete
         if( rhs == nullptr) {
             if( opt == TK_MINUS)
                 if( left.get_type() == "INT")
                     return -left.get<int>();
-            //TODO --
-            //TODO ++
+            if( opt == TK_PLUS_PLUS){
+                  ++(
+                  rt->getVariable(
+                          dynamic_cast<IdentExpr*>(lhs)->identName
+                          )->value);
+                  return left;
+                }
+            if(TK_MINUS_MINUS){
+                    --(rt->getVariable(
+                          dynamic_cast<IdentExpr*>(lhs)->identName
+                          )->value);
+                  return left;
+            }
             return left;
         }
         auto right = rhs->eval(rt);
-        delete rhs; //使用完删除它
-        rhs=nullptr;//是为不递归的被 delete
+        //delete rhs; //使用完删除它
+        //rhs=nullptr;//是为不递归的被 delete
         switch(opt){
             case TK_PLUS:
                   return left + right;
@@ -165,6 +176,18 @@ struct BinaryExpr : public Expression {
                   return left / right;
             case TK_MOD:
                   return left % right;
+            case TK_LT:
+                return left.get<int>() < right.get<int>() ? 1 : 0;
+            case TK_LE:
+                return left.get<int>() <= right.get<int>() ? 1 : 0;
+            case TK_EQ:
+                return left.get<int>() == right.get<int>() ? 1 : 0;
+            case TK_NE:
+                return left.get<int>() != right.get<int>() ? 1 : 0;
+            case TK_GT:
+                return left.get<int>() > right.get<int>() ? 1 : 0;
+            case TK_GE:
+                return left.get<int>() >= right.get<int>() ? 1 : 0;
             default:
                   throw "unsupport operator";
         }
@@ -366,4 +389,23 @@ struct WhileStmt : public Statement {
     }
 };
 
-// TODO forStmt
+struct ForStmt : public Statement {
+    explicit ForStmt(int line, int column) : Statement(line, column) {}
+
+    Expression* first{};
+    Expression* cond{};
+    Expression* last{};
+    Block * block{};
+
+    //TODO 
+    ExecResult interpret(Runtime* rt) override ;
+
+    std::string astString() override { return "ForStmt";}
+
+    virtual
+    ~ForStmt(){
+        delete first;
+        delete cond;
+        delete block;
+    }
+};

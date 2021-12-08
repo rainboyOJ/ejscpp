@@ -40,11 +40,21 @@ char Lexical::get() {
     if( q.size() == 0)
         buff(100);
     char c = q.front();
+    if( c == '\n') {
+        line++;
+        colum = 0;
+    }
+    else 
+        colum++;
     q.pop_front();
     return c;
 }
 
 void Lexical::unget(char c){
+    if( line == '\n')
+        line--;
+    else
+        colum--;
     q.push_front(c);
 }
 
@@ -182,8 +192,12 @@ bool Lexical::parse(){
             auto idx =   keywords.find(value);
             if( idx == keywords.end())
                 setCurrentToken(TK_IDENT, std::move(value));
-            else
+            else if(value == "let" || value == "var"){ //忽略掉
+                return parse(); //再次执行
+            }
+            else{
                 setCurrentToken(idx->second,std::move(value));
+            }
             return 1;
         }
         // 5 字符串字面值

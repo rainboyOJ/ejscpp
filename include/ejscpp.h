@@ -9,6 +9,7 @@
 #include "base.hpp"
 #include "parser.h"
 #include "buildinFunciton.h"
+#include "exception.hpp"
 
 /**
  * 代码 解释器

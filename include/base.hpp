@@ -50,6 +50,20 @@ public:
             return get<int>() - v.get<int>();
         throw "must both is INT type";
     }
+    Value operator--(){
+        if( isInt()){
+            value = std::get<int>(value)-1;
+            return get<int>()+1;
+        }
+        throw "must both is INT type";
+    }
+    Value operator++(){
+        if( isInt()){
+            value = std::get<int>(value)+1;
+            return get<int>()-1;
+        }
+        throw "must both is INT type";
+    }
 
     Value operator*(Value & v){
         if( isInt() && v.isInt())

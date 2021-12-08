@@ -20,8 +20,8 @@ class Lexical {
     using TOKEN_VALUE = std::pair<TOKEN, std::string>;
     public:
         Lexical() =delete;
-        Lexical(const std::filesystem::path & ejs_file_path) : 
-            line(0),colum(0),
+        Lexical(const std::filesystem::path & ejs_file_path,int& line,int &colum) : 
+            line{line},colum{colum},
             ejs_file_path(ejs_file_path),
             keywords({
                 {"let", KW_LET},
@@ -57,8 +57,8 @@ class Lexical {
 
         void buff(size_t const siz);
 
-        int line  = 1;
-        int colum = 0;
+        int& line;
+        int& colum;
 
         bool in_script_tag = 0; //在script_tag内部
 

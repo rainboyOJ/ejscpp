@@ -21,7 +21,7 @@ class Parser {
 
 public:
     explicit Parser(const std::string& fileName) 
-        : m_lex{fileName}
+        : m_lex{fileName,line,column}
     {};
 
     //~Parser(); TODO
@@ -43,7 +43,7 @@ private:
     ExpressionStmt* parseExpressionStmt(); 
 
     //IfStmt* parseIfStmt();
-    //WhileStmt* parseWhileStmt();
+    ForStmt* parseForStmt();
     //ReturnStmt* parseReturnStmt();
 
     //解析一条语句

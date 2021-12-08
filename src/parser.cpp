@@ -2,6 +2,7 @@
 
 #include "parser.h"
 #include "utils.hpp"
+#include "exception.hpp"
 
 //得到运算符 优先级
 /**
@@ -79,6 +80,14 @@ Expression* Parser::parsePrimaryExpr(){
                 currentToken = next();
                 return func;
             }
+            case TK_PLUS_PLUS: // i++，i--
+            case TK_MINUS_MINUS:{
+                    auto var = new BinaryExpr(line,column);
+                    var->lhs = new IdentExpr(ident, line, column);
+                    var->opt = getCurrentToken();
+                    currentToken = next();
+                    return var;
+                }
             case TK_LBRACKET: { // [ //下标 TODO
                 currentToken = next();
                 auto* val = new IndexExpr(line, column);
@@ -181,9 +190,19 @@ ExpressionStmt* Parser::parseExpressionStmt() {
     return node;
 }
 
+//解析一条语句
 Statement* Parser::parseStatement() {  
-    Statement* node; switch (getCurrentToken()) {
+    Statement* node; 
+    switch (getCurrentToken()) {
         //case KW_FOR //TODO
+        case KW_FOR:
+            currentToken = next(); //后面的(
+            if(getCurrentToken() != TK_LPAREN ){
+                throw ejscppException(line,column,"for must flow by (");
+            }
+            node = parseForStmt();
+            node->needRetValue = true; //for必输出
+            break;
         case LIT_OUT_SCRIPT_STR:{
                 auto stmt = new OutStrStmt(line,column);
                 stmt->value = std::move(std::get<std::string>(currentToken));
@@ -221,8 +240,55 @@ Statement* Parser::parseStatement() {
             break;
         default:
             node = parseExpressionStmt();  //解析表达式
-            node->needRetValue = needRetValue;
+            if( node != nullptr)
+                node->needRetValue = needRetValue;
             break;
+    }
+    return node;
+}
+
+
+//TODO for
+ForStmt* Parser::parseForStmt() {
+    auto* node = new ForStmt(line, column);
+    currentToken = next(); // 过滤 (
+    node->first = parseExpression();
+    //assert(getCurrentToken() == TK_SEMICOLON); //应该是;
+    if( getCurrentToken() != TK_SEMICOLON ){
+        throw  ejscppException(line,column,"should be ;");
+    }
+    currentToken = next();
+    node->cond = parseExpression();
+    if( getCurrentToken() != TK_SEMICOLON ){
+        throw  ejscppException(line,column,"should be ;");
+    }
+    currentToken = next();
+    node->last = parseExpression();
+    //assert(getCurrentToken() == TK_RPAREN); // )
+    if( getCurrentToken() != TK_RPAREN){
+        throw  ejscppException(line,column,"should be )");
+    }
+    currentToken = next();
+    node->block = parseBlock();
+    return node;
+}
+
+
+// 解析 block 块
+Block* Parser::parseBlock() {
+    Block* node{new Block};
+    currentToken = next();
+    node->stmts = parseStatementList(); //解析多个条语句
+    assert(getCurrentToken() == TK_RBRACE); // }
+    currentToken = next();
+    return node;
+}
+
+std::vector<Statement*> Parser::parseStatementList() {
+    std::vector<Statement*> node;
+    Statement* p;
+    while ((p = parseStatement()) != nullptr) {
+        node.push_back(p);
     }
     return node;
 }
