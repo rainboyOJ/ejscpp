@@ -113,7 +113,16 @@ struct Variable {
 class Context { 
     public:
         explicit Context() = default;
-        virtual ~Context(){}; // TODO 删除所有的变量
+        // TODO 删除所有的变量
+        virtual ~Context(){
+            for (auto& e : vars) { //删除变量
+                delete e.second;
+            }
+            for (auto& e : funcs) { //删除函数
+                delete e.second;
+            }
+
+        }
 
         //是否有对应的变量
         bool hasVariable(const std::string& identName) {
@@ -155,14 +164,15 @@ class Runtime : public Context {
     using BuiltinFuncType = Value (*)(Runtime*,
             std::vector<Value>&);
 
+
     public:
     explicit Runtime(){}
     explicit Runtime(const std::string& fileName)
         :filePath{ std::filesystem::absolute(fileName) },fileParentPath{filePath.parent_path()}
     {}
 
-    virtual ~Runtime() override{ //TODO 根据stmts 删除所有的内存 delete
-    }
+    //TODO 根据stmts 删除所有的内存 delete
+    virtual ~Runtime() override;
 
     //是否有内置的函数
     bool hasBuiltinFunction(const std::string& name) {
@@ -191,4 +201,5 @@ class Runtime : public Context {
     std::unordered_map<std::string, BuiltinFuncType> builtin;
     //语句列表
     std::vector<Statement*> stmts;
+
 };

@@ -65,6 +65,12 @@ struct ArrayExpr : public Expression {
 
     Value eval(Runtime* rt) override;
     std::string astString() override;
+
+    virtual ~ArrayExpr(){
+        for (auto& e : literal) {
+            delete e;
+        }
+    }
 };
 
 
@@ -94,6 +100,12 @@ struct IndexExpr : public Expression {
 
     Value eval(Runtime* rt) override { return 0;} // TODO
     std::string astString() override { return "IndexExpr";}
+
+    virtual
+    ~IndexExpr(){
+        delete index;
+    }
+
 };
 
 struct BinaryExpr : public Expression {
@@ -101,8 +113,16 @@ struct BinaryExpr : public Expression {
     Expression* lhs{};
     TOKEN opt{};
     Expression* rhs{};
+    virtual
+    ~BinaryExpr(){
+        delete lhs;
+        delete rhs;
+    }
+
     Value eval(Runtime* rt) override {
         auto left = lhs->eval(rt);
+        delete lhs; //删除左边
+        lhs = nullptr; //是为不递归的被 delete
         if( rhs == nullptr) {
             if( opt == TK_MINUS)
                 if( left.get_type() == "INT")
@@ -112,6 +132,8 @@ struct BinaryExpr : public Expression {
             return left;
         }
         auto right = rhs->eval(rt);
+        delete rhs; //使用完删除它
+        rhs=nullptr;//是为不递归的被 delete
         switch(opt){
             case TK_PLUS:
                   return left + right;
@@ -148,7 +170,14 @@ struct FunCallExpr : public Expression {
         else throw  "unkown function "+funcName;
     }
     std::string astString() override { return "FunCallExpr";}
-    //TODO dele all expression*
+    virtual
+    ~FunCallExpr(){
+        //std::cout << "删除了 FunCallExpr " << std::endl;
+        //删除 所有的 args
+        for (auto& e : args) {
+            delete e;
+        }
+    }
 };
 
 //连接两个 expression
@@ -159,6 +188,12 @@ struct AssignExpr : public Expression {
     Expression* lhs{};
     TOKEN opt;
     Expression* rhs{};
+
+    virtual
+    ~AssignExpr(){
+        delete lhs;
+        delete rhs;
+    }
 
     Value eval(Runtime* rt) override {
         if( typeid(*lhs) != typeid(IdentExpr)) {
@@ -201,6 +236,7 @@ struct OutStrStmt: public Statement {
     }
     std::string value;
     std::string astString() override { return "OutStrStmt";}
+    //不需要析构函数
 };
 
 struct EmptyStmt: public Statement {
@@ -211,6 +247,10 @@ struct EmptyStmt: public Statement {
         return r;
     }
     std::string astString() override { return "EmptyStmt";}
+    //不需要析构函数
+    virtual ~EmptyStmt() override{
+        //std::cout << "EmptyStmt dcotr" << std::endl;
+    }
 };
 
 struct BreakStmt : public Statement {
@@ -220,6 +260,7 @@ struct BreakStmt : public Statement {
         return ExecResult(ExecBreak);
     }
     std::string astString() override { return "BreakStmt";}
+    //不需要析构函数
 };
 
 struct ContinueStmt : public Statement {
@@ -229,6 +270,7 @@ struct ContinueStmt : public Statement {
         return  ExecResult(ExecContinue);
     }
     std::string astString() override { return  "ContinueStmt";}
+    //不需要析构函数
 };
 
 struct ExpressionStmt : public Statement {
@@ -242,6 +284,11 @@ struct ExpressionStmt : public Statement {
         return ExecResult{ExecNormal,Val};
     }
     std::string astString() override {return "ExpressionStmt"; }
+
+    virtual
+    ~ExpressionStmt() {
+        delete expr;
+    }
 };
 
 struct ReturnStmt : public Statement {
@@ -251,6 +298,11 @@ struct ReturnStmt : public Statement {
 
     ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
+
+    virtual
+    ~ReturnStmt(){
+        delete ret;
+    }
 };
 
 struct IfStmt : public Statement {
@@ -262,6 +314,13 @@ struct IfStmt : public Statement {
 
     ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
+
+    virtual
+    ~IfStmt(){
+        delete cond;
+        delete block;
+        delete elseBlock;
+    }
 };
 
 struct WhileStmt : public Statement {
@@ -272,4 +331,12 @@ struct WhileStmt : public Statement {
 
     ExecResult interpret(Runtime* rt) override;
     std::string astString() override;
+
+    virtual
+    ~WhileStmt(){
+        delete cond;
+        delete block;
+    }
 };
+
+// TODO forStmt
