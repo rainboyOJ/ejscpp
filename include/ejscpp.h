@@ -8,6 +8,7 @@
 
 #include "base.hpp"
 #include "parser.h"
+#include "buildinFunciton.h"
 
 /**
  * 代码 解释器
@@ -16,8 +17,10 @@ class ejscpp {
 public:
     
     explicit ejscpp(const std::string& filePath)
-        :m_parser{filePath}
-    {}
+        :m_parser{filePath},rt{filePath}
+    {
+        rt.setBuiltinFunction("include", include);
+    }
     std::string excute(); //执行器
 private:
     Runtime rt; //运行时

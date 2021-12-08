@@ -131,12 +131,24 @@ struct BinaryExpr : public Expression {
     std::string astString() override { return "BinaryExpr"; }
 };
 
+
 struct FunCallExpr : public Expression {
     explicit FunCallExpr(int line, int column) : Expression(line, column) {}
-    std::string funcName;
-    std::vector<Expression*> args;
-    Value eval(Runtime* rt) override;
-    std::string astString() override;
+    std::string funcName; //函数的名字
+    std::vector<Expression*> args; //参数列表
+    Value eval(Runtime* rt) override {
+        auto func =  rt->getBuiltinFunction(funcName) ;
+        if(func != nullptr){
+            std::vector<Value> v_arg;
+            for (auto& e : args) {
+                v_arg.push_back(e->eval(rt));
+            }
+            return func(rt,v_arg);
+        }
+        else throw  "unkown function "+funcName;
+    }
+    std::string astString() override { return "FunCallExpr";}
+    //TODO dele all expression*
 };
 
 //连接两个 expression

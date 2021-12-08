@@ -6,6 +6,7 @@
 #include <variant>
 #include <string_view>
 #include <unordered_map>
+#include <filesystem>
 
 using namespace std::literals;
 
@@ -151,24 +152,40 @@ class Context {
 //运行时
 class Runtime : public Context {
     //内置函数
-    using BuiltinFuncType = Value (*)(Runtime*, std::deque<Context*>,
-            std::vector<Value>);
+    using BuiltinFuncType = Value (*)(Runtime*,
+            std::vector<Value>&);
 
     public:
     explicit Runtime(){}
+    explicit Runtime(const std::string& fileName)
+        :filePath{ std::filesystem::absolute(fileName) },fileParentPath{filePath.parent_path()}
+    {}
+
     virtual ~Runtime() override{ //TODO 根据stmts 删除所有的内存 delete
     }
 
     //是否有内置的函数
-    bool hasBuiltinFunction(const std::string& name);
+    bool hasBuiltinFunction(const std::string& name) {
+        return builtin.find(name) != builtin.end();
+    }
+    void setBuiltinFunction(const std::string& name,BuiltinFuncType f) {
+        builtin[name] = f; 
+    }
     //得到内置的函数
-    BuiltinFuncType getBuiltinFunction(const std::string& name);
+    BuiltinFuncType getBuiltinFunction(const std::string& name) {
+        if( builtin.find(name) != builtin.end()){
+            return builtin[name];
+        }
+        throw std::string("not found buildinFunciton : ") + name;
+    }
 
     //加入语句
     void addStatement(Statement* stmt) { stmts.push_back(stmt);}
     //得到语句
     const std::vector<Statement*>& getStatements() const { return stmts; }
 
+    std::filesystem::path filePath; //要解析的文件的路径
+    std::filesystem::path fileParentPath; //要解析的文件的路径
     private:
     //内置函数
     std::unordered_map<std::string, BuiltinFuncType> builtin;

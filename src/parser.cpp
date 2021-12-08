@@ -65,8 +65,20 @@ Expression* Parser::parsePrimaryExpr(){
         auto ident = getCurrentLexeme();
         currentToken = next();
         switch (getCurrentToken()) {
-            //case TK_LPAREN: { //函数调用
-            //}
+            case TK_LPAREN: { //函数调用
+                currentToken = next();
+                //调用函数
+                auto func = new FunCallExpr(1,1);
+                func->funcName = ident;
+                while ( getCurrentToken() !=  TK_RPAREN) {
+                    func->args.push_back(parseExpression());
+                    if(getCurrentToken() == TK_COMMA)
+                        currentToken = next();
+                }
+                assert(getCurrentToken() == TK_RPAREN);
+                currentToken = next();
+                return func;
+            }
             //case TK_LBRACKET: { // [ //下标 TODO
                 //currentToken = next();
                 //auto* val = new IndexExpr(line, column);
@@ -226,4 +238,4 @@ void Parser::parse(Runtime* rt) {
     do {
         rt->addStatement(parseStatement());
     } while (getCurrentToken() != TK_EOF);
-}
+}   
