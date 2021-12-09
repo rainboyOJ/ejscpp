@@ -8,7 +8,9 @@ std::string ejscpp::excute(){
     auto stmts = rt.getStatements();
     for (auto& stmt : stmts) {
         auto astV = stmt->astString();
+#ifdef DEBUG
         std::cout << astV << std::endl;
+#endif
         auto r = stmt->interpret(&rt); //解释语句
         if( stmt -> needRetValue)
             res += r.retValue.get<std::string>();

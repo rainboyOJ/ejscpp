@@ -5,6 +5,7 @@ cmake_minimum_required (VERSION 3.0)
 project(ejscpp)
 
 # 指定编译flag
+# TODO 设定 debug 与release
 set(CMAKE_CXX_FLAGS "-std=c++17 -g")
 
 set(TEST_EJS_DIR ./test)
@@ -48,7 +49,7 @@ endif()
 add_subdirectory(./src)
 
 ## 添加测试
-add_subdirectory(./test)
+#add_subdirectory(./test)
 
 
 
