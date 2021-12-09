@@ -49,7 +49,7 @@ endif()
 add_subdirectory(./src)
 
 ## 添加测试
-#add_subdirectory(./test)
+add_subdirectory(./test)
 
 
 

@@ -113,7 +113,8 @@ struct IndexExpr : public Expression {
                 if( i < Var->arr.size() )
                     return Var->arr[i];
                 else
-                    throw identName + std::to_string(i)+" over array size";
+                    return Value(0); //没有的下标返回0
+                    //throw identName + std::to_string(i)+" over array size";
             }
             throw identName +"is not Array";
         }
