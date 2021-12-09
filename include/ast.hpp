@@ -406,6 +406,7 @@ struct ForStmt : public Statement {
     ~ForStmt(){
         delete first;
         delete cond;
+        delete last;
         delete block;
     }
 };

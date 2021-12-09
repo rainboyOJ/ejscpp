@@ -102,6 +102,7 @@ struct ExecResult {
 struct Block { 
     explicit Block() = default;
     std::vector<Statement*> stmts;
+    ~Block();
 };
 
 struct Function { //函数

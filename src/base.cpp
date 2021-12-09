@@ -6,3 +6,9 @@ Runtime::~Runtime() {
         delete e;
     }
 }
+
+Block::~Block() { 
+    for (auto& e : stmts) {
+        delete  e;
+    } 
+}
