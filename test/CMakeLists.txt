@@ -1,4 +1,3 @@
-add_definitions(-DDEBUG)
 add_executable(test test.cpp)
 set_target_properties(test
     PROPERTIES

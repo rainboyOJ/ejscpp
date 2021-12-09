@@ -6,6 +6,7 @@
 #include "lexical_analysis.h"
 #include "utils.hpp"
 #include <iostream>
+#include "exception.hpp"
 
 const Lexical::TOKEN_VALUE & Lexical::getCurrentToken() const//得到当前的TOk
 {
@@ -39,6 +40,9 @@ void Lexical::buff(size_t const siz){
 char Lexical::get() {
     if( q.size() == 0)
         buff(100);
+    if(q.size() == 0) {
+        throw std::string("read file reach end ") + __FILE__ + std::to_string(__LINE__);
+    }
     char c = q.front();
     if( c == '\n') {
         line++;
@@ -220,8 +224,14 @@ bool Lexical::parse(){
         // 6 各种运行符号
         // + - * / % () {} [] , ; = ==
         if( anyone(c, '+', '-', '*', '/', '%', 
-                    '(',')', '{','}', '[',']', ',', ';', '=','!' ,'<','>')){
+                    '(',')', '{','}', '[',']', ',', ';', '=','!' ,'<','>','|')){
             switch( c ){
+                case '|': 
+                    if( peek() == '|'){
+                        get();
+                        setCurrentToken(TK_LOGOR);  
+                    }
+                    break;
                 case '+': 
                     if( peek() == '+'){
                         get();

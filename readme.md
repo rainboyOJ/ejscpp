@@ -2,14 +2,25 @@
 
 使用c++实现[ejs模板](https://ejs.co/)的部分语法，给[rbook]()使用
 
-## 编译
-
+## 编译与测试
+编译
 ```sh
 mkdir build
 cd build
 cmake ..
-make
+cmake --build .
 ```
+
+测试
+
+```sh
+mkdir build
+cd build
+cmake ..  -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --target runUnitTest
+```
+
+
 
 
 ## 支持的语法
@@ -29,3 +40,4 @@ make
 不支持
  - 函数定义
  - 字符串模板
+

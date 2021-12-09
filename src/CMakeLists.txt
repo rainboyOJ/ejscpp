@@ -1,5 +1,5 @@
 aux_source_directory(. DIR_SRCS)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 #add_executable(ejscpp ${DIR_SRCS})
 
 # 生成静态库

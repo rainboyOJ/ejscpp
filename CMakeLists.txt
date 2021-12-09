@@ -4,9 +4,18 @@ cmake_minimum_required (VERSION 3.0)
 # 项目名称
 project(ejscpp)
 
+set(CMAKE_CXX_FLAGS "-std=c++17")
 # 指定编译flag
 # TODO 设定 debug 与release
-set(CMAKE_CXX_FLAGS "-std=c++17 -g")
+if( CMAKE_BUILD_TYPE )
+    string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
+    if (build_type STREQUAL debug)
+        set(CMAKE_CXX_FLAGS "-std=c++17 -g")
+        add_definitions(-DDEBUG)
+    endif()
+endif()
+
+
 
 set(TEST_EJS_DIR ./test)
 
