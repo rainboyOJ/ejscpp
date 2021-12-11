@@ -67,7 +67,7 @@ graph g{
 var log =[]
 var engine = "dot"
 for(let i=1;i<=16;i++){
-    var page = `dot/kmp_${i}.dot`
+    var page = "dot/kmp_" + i + ".dot"
 %>
 
 ``` <%= engine || ""%> <%= log[i-1] || "" %>
@@ -100,7 +100,7 @@ for(let i=1;i<=16;i++){
 var log =[]
 var engine = "dot"
 for(let i=1;i<=4;i++){
-    var page = `dot/next_${i}.dot`
+    var page = "dot/next_" + i + ".dot"
 %>
 
 ``` <%= engine || ""%> <%= log[i-1] || "" %>

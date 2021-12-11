@@ -17,6 +17,10 @@ struct Statement;   //语句
 
 enum ExecutionResultType { ExecNormal, ExecReturn, ExecBreak, ExecContinue };
 
+struct Variable;
+
+//根据名字来查找值的函数指针
+using findVariable = Variable * (*)(const std::string& name); 
 
 //我们只会存这两种值 整数与字符串
 struct Value {
@@ -119,6 +123,12 @@ struct Function { //函数
 //变量
 struct Variable {
     explicit Variable() = default;
+    explicit Variable(std::string_view name,std::string_view value)
+        :name{name},value{std::string(value)}
+    {}
+    explicit Variable(std::string_view name,int value)
+        :name{name},value{value}
+    {}
     std::string name; //名字
     Value value;//值
     bool isArray{false};
@@ -130,6 +140,7 @@ struct Variable {
 class Context { 
     public:
         explicit Context() = default;
+        explicit Context(findVariable __find__) : m_findVariable{__find__} {}
         // TODO 删除所有的变量
         virtual ~Context(){
             for (auto& e : vars) { //删除变量
@@ -143,7 +154,11 @@ class Context {
 
         //是否有对应的变量
         bool hasVariable(const std::string& identName) {
-            return (vars.find(identName) != vars.end() );
+            if (vars.find(identName) != vars.end())
+                return true;
+            else if( m_findVariable !=nullptr && m_findVariable(identName) !=nullptr)
+                return true;
+            return false;
         }
         //创建一个变量
         Variable* createVariable(const std::string& identName, Value value){
@@ -161,6 +176,9 @@ class Context {
         Variable* getVariable(const std::string& identName){
             if( vars.find(identName) != vars.end())
                 return vars[identName];
+            else if( m_findVariable != nullptr){
+                return m_findVariable(identName);
+            }
             else return nullptr;
         }
 
@@ -172,6 +190,7 @@ class Context {
         Function* getFunction(const std::string& name); //根据名字得到函数
 
     private:
+        const findVariable  m_findVariable{nullptr};
         std::unordered_map<std::string, Variable*> vars; //变量
         std::unordered_map<std::string, Function*> funcs; //函数
 };
@@ -185,8 +204,9 @@ class Runtime : public Context {
 
     public:
     explicit Runtime(){}
-    explicit Runtime(const std::string& fileName)
-        :filePath{ std::filesystem::absolute(fileName) },fileParentPath{filePath.parent_path()}
+    explicit Runtime(const std::string& fileName,findVariable __find__)
+        :filePath{ std::filesystem::absolute(fileName) },fileParentPath{filePath.parent_path()},
+        Context{__find__}
     {}
 
     //TODO 根据stmts 删除所有的内存 delete
@@ -219,5 +239,6 @@ class Runtime : public Context {
     std::unordered_map<std::string, BuiltinFuncType> builtin;
     //语句列表
     std::vector<Statement*> stmts;
+
 
 };

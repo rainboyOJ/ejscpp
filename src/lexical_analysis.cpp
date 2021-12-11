@@ -189,7 +189,7 @@ bool Lexical::parse(){
         if( std::isalpha(c) || c == '_'){
             std::string value{c};
             auto c  = peek();
-            while ( std::isalpha( c)  || std::isdigit(c) ) {
+            while ( std::isalpha(c)  || std::isdigit(c) || c == '.' || c == '_') {
                 value += get();
                 c = peek();
             }

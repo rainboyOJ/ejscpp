@@ -17,8 +17,8 @@
 class ejscpp {
 public:
     
-    explicit ejscpp(const std::string& filePath)
-        :m_parser{filePath},rt{filePath}
+    explicit ejscpp(const std::string& filePath,findVariable __find__ = nullptr)
+        :m_parser{filePath},rt{filePath,__find__}
     {
         rt.setBuiltinFunction("include", include);
     }

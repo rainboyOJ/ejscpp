@@ -10,6 +10,42 @@
 
 using namespace std;
 
+//容器 单例模式
+template<typename T>
+struct ShareContainer {
+public:
+    // 
+    static ShareContainer& create(){
+        static ShareContainer sc;
+        return sc;
+    }
+
+    /**
+     * 放入的数据
+     */
+    template<typename... Args>
+    void push(const std::string& name,Args... arg){
+        container[name] = std::make_shared<T>(std::forward<Args>(arg)...);
+    }
+
+    //得到对应的指针
+    T * get(const std::string& name) {
+        auto shptr = container.find(name);
+        if(  shptr == container.end() )
+            return nullptr;//没有找到
+        return shptr->second.get();
+    }
+    
+private:
+    ShareContainer() = default;
+    using SHPTR = std::shared_ptr<T>;
+    std::unordered_map<std::string,SHPTR> container;
+};
+
+Variable * myVariable(const std::string& name){
+    return ShareContainer<Variable>::create().get(name);
+}
+
 int main(int argc,char * argv[]){
     printf("argc = %d\n",argc);
     for(int i=0;i<=argc-1;++i){
@@ -29,11 +65,13 @@ int main(int argc,char * argv[]){
     }
     std::cout  << std::endl;
     std::cout  << std::endl;
+
+    ShareContainer<Variable>::create().push("USER.pcs_site","USER.pcs_site","https://pcs.roj.ac.cn/");
     
 
     try {
         
-        ejscpp ejs(argv[1]);
+        ejscpp ejs(argv[1],myVariable);
         std::cout <<  ejs.excute();
     }
     catch(std::exception & e){
